@@ -41,11 +41,15 @@
     cmd: installrepo.sh
   become: yes
 
-  ## Need update first
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: yes
+  
 - name: Install docker
   apt:
     package: 
       - docker-ce 
       - docker-ce-cli
       - containerd.io
-    
+  become: yes    
