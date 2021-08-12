@@ -1,0 +1,51 @@
+---
+# tasks file for docker
+
+- name: install dependencies
+  apt:
+    package:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+  become: yes
+
+- name: get LSB release
+  ansible.builtin.command:
+    cmd: lsb_release -cs
+  register: lsb_release
+  changed_when: false
+  failed_when: lsb_release.rc > 0
+
+- name: debug message
+  debug:
+    msg: "{{ lsb_release.stdout }}"
+
+- name: check if GPG file exists
+  stat:
+    path: /usr/share/keyrings/docker-archive-keyring.gpg
+  register: gpg
+
+
+- name: Install GPG key
+  ansible.builtin.shell:
+    cmd: |
+      curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  when: gpg.stat.exists == False
+
+#Not ideal long term, ok for now
+- name: Install repo
+  ansible.builtin.script:
+    cmd: installrepo.sh
+  become: yes
+
+  ## Need update first
+- name: Install docker
+  apt:
+    package: 
+      - docker-ce 
+      - docker-ce-cli
+      - containerd.io
+    
