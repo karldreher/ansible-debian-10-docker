@@ -19,7 +19,7 @@
   changed_when: false
   failed_when: lsb_release.rc > 0
 
-- name: debug message
+- name: Print LSB release info
   debug:
     msg: "{{ lsb_release.stdout }}"
 
@@ -28,12 +28,23 @@
     path: /usr/share/keyrings/docker-archive-keyring.gpg
   register: gpg
 
+- name: download GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/debian/gpg
+    dest: "/tmp/docker-gpg-key-temp"
+  register: gpg_download
+
+
+- name: debug
+  debug:
+    msg: "{{ gpg_download }}"
 
 - name: Install GPG key
   ansible.builtin.shell:
     cmd: |
-      curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg "{{ gpg_download.dest }}"
   when: gpg.stat.exists == False
+  become: yes
 
 #Not ideal long term, ok for now
 - name: Install repo
