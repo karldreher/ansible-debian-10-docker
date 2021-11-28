@@ -23,37 +23,17 @@
   debug:
     msg: "{{ lsb_release.stdout }}"
 
-- name: check if GPG file exists
-  stat:
-    path: /usr/share/keyrings/docker-archive-keyring.gpg
-  register: gpg
-
-- name: download GPG key
-  ansible.builtin.get_url:
+- name: Add Docker apt key
+  apt_key: 
     url: https://download.docker.com/linux/debian/gpg
-    dest: "/tmp/docker-gpg-key-temp"
-  register: gpg_download
-
-
-- name: debug
-  debug:
-    msg: "{{ gpg_download }}"
-
-- name: Install GPG key
-  ansible.builtin.shell:
-    cmd: |
-      gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg "{{ gpg_download.dest }}"
-  when: gpg.stat.exists == False
+    state: present
   become: yes
 
-#Not ideal long term, ok for now
-- name: Install repo
-  ansible.builtin.script:
-    cmd: installrepo.sh
-  become: yes
-
-- name: Update apt cache
-  apt:
+- name: Install docker repo
+  apt_repository: 
+    repo: "deb https://download.docker.com/linux/debian {{ lsb_release.stdout }} stable"
+    state: present 
+    filename: docker 
     update_cache: yes
   become: yes
   
